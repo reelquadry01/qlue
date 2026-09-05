@@ -10,26 +10,12 @@ interface BackButtonProps {
 export default function BackButton({ href, label = 'Back' }: BackButtonProps) {
   const router = useRouter();
 
-  const handleClick = () => {
-    if (href) {
-      router.push(href);
-    } else {
-      router.back();
-    }
-  };
-
   return (
     <button
-      onClick={handleClick}
-      className="flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors text-sm font-medium"
+      onClick={() => (href ? router.push(href) : router.back())}
+      className="flex items-center gap-1 text-foreground-muted hover:text-foreground text-caption transition-colors w-fit"
     >
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
       {label}

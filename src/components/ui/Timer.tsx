@@ -1,107 +1,56 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface TimerProps {
   duration: number;
   isRunning: boolean;
   onTimeUp: () => void;
-  onTick?: (remaining: number) => void;
 }
 
-export default function Timer({ duration, isRunning, onTimeUp, onTick }: TimerProps) {
-  const [remaining, setRemaining] = useState(duration);
-  const startTimeRef = useRef<number | null>(null);
-  const rafRef = useRef<number>(0);
+export default function Timer({ duration, isRunning, onTimeUp }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(duration);
   const onTimeUpRef = useRef(onTimeUp);
-  const onTickRef = useRef(onTick);
 
-  onTimeUpRef.current = onTimeUp;
-  onTickRef.current = onTick;
+  useEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
 
   useEffect(() => {
-    if (isRunning) {
-      startTimeRef.current = Date.now();
-      setRemaining(duration);
+    setTimeLeft(duration);
+  }, [duration]);
 
-      const tick = () => {
-        if (!startTimeRef.current) return;
-        const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        const left = Math.max(0, duration - elapsed);
-        setRemaining(left);
-        onTickRef.current?.(left);
-
-        if (left <= 0) {
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
           onTimeUpRef.current();
-          return;
+          return 0;
         }
-        rafRef.current = requestAnimationFrame(tick);
-      };
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning]);
 
-      rafRef.current = requestAnimationFrame(tick);
-    }
-
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [isRunning, duration]);
-
-  const seconds = Math.ceil(remaining);
-  const percentage = (remaining / duration) * 100;
-
-  let colorClass = 'text-success';
-  let bgClass = 'from-success/20 to-success/5';
-  let ringClass = 'stroke-success';
-
-  if (remaining <= 5) {
-    colorClass = 'text-danger';
-    bgClass = 'from-danger/20 to-danger/5';
-    ringClass = 'stroke-danger';
-  } else if (remaining <= 10) {
-    colorClass = 'text-warning';
-    bgClass = 'from-warning/20 to-warning/5';
-    ringClass = 'stroke-warning';
-  } else if (remaining <= 30) {
-    colorClass = 'text-warning';
-    bgClass = 'from-warning/10 to-transparent';
-    ringClass = 'stroke-warning';
-  }
-
-  const isUrgent = remaining <= 10;
-  const circumference = 2 * Math.PI * 54;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const progress = timeLeft / duration;
+  const pct = Math.round(progress * 100);
+  const isUrgent = timeLeft <= 10;
 
   return (
-    <div className={`relative flex items-center justify-center ${isUrgent ? 'animate-pulse-urgent' : ''}`}>
-      <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-        <circle
-          cx="60"
-          cy="60"
-          r="54"
-          fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="6"
-        />
-        <circle
-          cx="60"
-          cy="60"
-          r="54"
-          fill="none"
-          className={ringClass}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          style={{ transition: 'stroke-dashoffset 0.1s linear' }}
-        />
+    <div className={`flex items-center gap-3 ${isUrgent ? 'animate-pulse-urgent' : ''}`}>
+      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="3"
+          className="text-surface-light" />
+        <circle cx="28" cy="28" r="24" fill="none"
+          stroke={isUrgent ? 'var(--danger)' : 'var(--primary)'}
+          strokeWidth="3"
+          strokeDasharray={`${progress * 150.8} 150.8`}
+          strokeLinecap="round" />
       </svg>
-      <div className={`absolute inset-0 flex items-center justify-center`}>
-        <span className={`text-4xl font-mono font-bold ${colorClass}`}>
-          {seconds}
-        </span>
-      </div>
+      <span className={`text-[1.5rem] font-bold font-mono ${isUrgent ? 'text-danger' : 'text-foreground'}`}>
+        {timeLeft}s
+      </span>
     </div>
   );
 }

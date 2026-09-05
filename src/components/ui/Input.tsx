@@ -1,33 +1,24 @@
-'use client';
-
 import { InputHTMLAttributes, forwardRef } from 'react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-}
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {}
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
-    return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-label text-foreground-muted mb-1.5">
-            {label}
-          </label>
-        )}
-        <input
-          ref={ref}
-          className={`w-full px-4 py-3 rounded-xl bg-surface border border-card-border text-foreground placeholder:text-foreground-faint focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 ${
-            error ? 'border-danger ring-2 ring-danger/20' : ''
-          } ${className}`}
-          {...props}
-        />
-        {error && <p className="mt-1.5 text-sm text-danger">{error}</p>}
-      </div>
-    );
-  }
-);
+const Input = forwardRef<HTMLInputElement, InputProps>(({ className = '', ...props }, ref) => {
+  return (
+    <input
+      ref={ref}
+      className={`
+        w-full px-4 py-3 rounded-xl
+        bg-surface border border-white/5
+        text-foreground placeholder:text-foreground-faint
+        text-base font-medium
+        focus:outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20
+        transition-all
+        ${className}
+      `}
+      {...props}
+    />
+  );
+});
 
 Input.displayName = 'Input';
 export default Input;

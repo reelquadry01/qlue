@@ -1,38 +1,34 @@
 'use client';
 
-import { HTMLAttributes, forwardRef } from 'react';
+import { HTMLAttributes, ReactNode } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
   hover?: boolean;
   active?: boolean;
-  padding?: 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ hover = false, active = false, padding = 'md', className = '', children, ...props }, ref) => {
-    let classes = 'glass-card transition-all duration-200';
+export default function Card({ children, hover = false, active = false, padding = 'md', className = '', ...props }: CardProps) {
+  const paddingClasses = {
+    none: '',
+    sm: 'p-3',
+    md: 'p-4',
+    lg: 'p-6',
+  };
 
-    const paddings = {
-      sm: 'p-3',
-      md: 'p-4',
-      lg: 'p-6',
-    };
-
-    if (hover) {
-      classes += ' cursor-pointer hover:bg-card-hover hover:border-foreground-muted/20 hover:scale-[1.01]';
-    }
-
-    if (active) {
-      classes += ' ring-2 ring-primary border-primary/30 bg-card-active';
-    }
-
-    return (
-      <div ref={ref} className={`${classes} ${paddings[padding]} ${className}`} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
-
-Card.displayName = 'Card';
-export default Card;
+  return (
+    <div
+      className={`
+        glass-card ${paddingClasses[padding]}
+        ${hover ? 'cursor-pointer hover:bg-card-hover' : ''}
+        ${active ? 'ring-2 ring-primary/30 bg-card-active border-primary/20' : ''}
+        transition-all duration-150
+        ${className}
+      `}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
