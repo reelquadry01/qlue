@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { useRouter } from 'next/navigation';
 import { CategorySelection } from '@/engine/types';
-import { CATEGORIES, getCategoryById } from '@/lib/categories';
+import { CATEGORIES } from '@/lib/categories';
 import { getPromptCountByCategory } from '@/data/seed-content';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -43,16 +43,16 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col px-6 py-8 max-w-lg mx-auto w-full">
+    <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full safe-area-top safe-area-bottom">
       <BackButton href="/new-game" />
-      <div className="mt-4 mb-6">
-        <h1 className="text-2xl font-bold mb-1">Pick Categories</h1>
-        <p className="text-foreground-muted text-sm">
+      <div className="mt-6 mb-8">
+        <h1 className="text-title mb-1 text-balance">Pick Categories</h1>
+        <p className="text-body text-foreground-muted">
           Choose what your team will be tested on
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 mb-6">
+      <div className="flex flex-col gap-3 mb-6">
         {CATEGORIES.map((category) => {
           const isSelected = selected.some((s) => s.categoryId === category.id);
           const selection = selected.find((s) => s.categoryId === category.id);
@@ -66,15 +66,17 @@ export default function CategoriesPage() {
               onClick={() => toggleCategory(category.id)}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{category.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{category.name}</h3>
-                  <p className="text-xs text-foreground-muted">
+                <span className="text-2xl w-10 h-10 flex items-center justify-center rounded-xl bg-surface">
+                  {category.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-body">{category.name}</h3>
+                  <p className="text-label text-foreground-faint">
                     {promptCount} prompts
                   </p>
                 </div>
                 <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                     isSelected
                       ? 'border-primary bg-primary'
                       : 'border-card-border'
@@ -82,7 +84,7 @@ export default function CategoriesPage() {
                 >
                   {isSelected && (
                     <svg
-                      className="w-4 h-4 text-white"
+                      className="w-3.5 h-3.5 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -100,9 +102,9 @@ export default function CategoriesPage() {
 
               {isSelected && selection && (
                 <div className="mt-3 pt-3 border-t border-card-border">
-                  <div className="flex items-center justify-between text-xs text-foreground-muted mb-1">
-                    <span>Weight</span>
-                    <span>{selection.weight}%</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-label text-foreground-faint">Frequency</span>
+                    <span className="text-caption text-foreground-muted font-semibold">{selection.weight}%</span>
                   </div>
                   <input
                     type="range"
@@ -115,7 +117,7 @@ export default function CategoriesPage() {
                       updateWeight(category.id, Number(e.target.value));
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-full h-1.5 rounded-full appearance-none bg-white/10 accent-primary"
+                    className="w-full h-1.5 rounded-full appearance-none bg-surface-light accent-primary cursor-pointer"
                   />
                 </div>
               )}

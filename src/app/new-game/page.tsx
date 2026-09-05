@@ -11,7 +11,12 @@ import Card from '@/components/ui/Card';
 import BackButton from '@/components/ui/BackButton';
 
 const TEAM_NAMES = ['Team A', 'Team B', 'Team C', 'Team D'];
-const TEAM_COLORS = ['bg-primary', 'bg-success', 'bg-warning', 'bg-danger'];
+const TEAM_ACCENTS = [
+  'border-l-primary',
+  'border-l-success',
+  'border-l-warning',
+  'border-l-danger',
+];
 
 export default function NewGamePage() {
   const { state, dispatch } = useGame();
@@ -25,12 +30,17 @@ export default function NewGamePage() {
     { id: uuid(), name: 'Team B', players: [], score: 0, streak: 0, bestStreak: 0 },
   ]);
   const [autoAssign, setAutoAssign] = useState(true);
+  const [justAdded, setJustAdded] = useState<string | null>(null);
 
   const addPlayer = () => {
     const name = newName.trim();
     if (!name || players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return;
-    setPlayers([...players, { id: uuid(), name }]);
+    const player = { id: uuid(), name };
+    setPlayers([...players, player]);
     setNewName('');
+    // Flash feedback
+    setJustAdded(player.id);
+    setTimeout(() => setJustAdded(null), 600);
   };
 
   const removePlayer = (id: string) => {
@@ -94,55 +104,63 @@ export default function NewGamePage() {
 
   if (step === 'players') {
     return (
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-lg mx-auto w-full">
+      <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full safe-area-top safe-area-bottom">
         <BackButton href="/" />
-        <div className="mt-4 mb-6">
-          <h1 className="text-2xl font-bold mb-1">Add Players</h1>
-          <p className="text-foreground-muted text-sm">
-            Add at least 2 players to get started
+        <div className="mt-6 mb-8">
+          <h1 className="text-title mb-1 text-balance">Add Players</h1>
+          <p className="text-body text-foreground-muted">
+            Add at least 2 players to start
           </p>
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-5">
           <Input
             placeholder="Type a name..."
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addPlayer()}
           />
-          <Button onClick={addPlayer} disabled={!newName.trim()}>
+          <Button onClick={addPlayer} disabled={!newName.trim()} className="shrink-0">
             Add
           </Button>
         </div>
 
-        <div className="flex flex-col gap-2 mb-6">
+        <div className="flex flex-col gap-2 mb-6 flex-1">
           {players.map((player) => (
-            <Card key={player.id} className="flex items-center justify-between">
-              <span className="font-medium">{player.name}</span>
+            <Card
+              key={player.id}
+              className={`flex items-center justify-between ${
+                justAdded === player.id ? 'animate-correct-flash' : ''
+              }`}
+            >
+              <span className="font-medium text-body">{player.name}</span>
               <button
                 onClick={() => removePlayer(player.id)}
-                className="text-foreground-muted hover:text-danger transition-colors text-sm"
+                className="text-foreground-faint hover:text-danger text-caption transition-colors"
               >
                 Remove
               </button>
             </Card>
           ))}
           {players.length === 0 && (
-            <p className="text-foreground-muted text-sm text-center py-8">
-              No players added yet
-            </p>
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+              <div className="text-4xl mb-3 opacity-30">👥</div>
+              <p className="text-foreground-faint text-sm">
+                No players yet — type a name above
+              </p>
+            </div>
           )}
         </div>
 
-        <div className="mt-auto">
-          <label className="flex items-center gap-3 mb-4 cursor-pointer">
+        <div className="mt-auto pt-4">
+          <label className="flex items-center gap-3 mb-4 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={autoAssign}
               onChange={(e) => setAutoAssign(e.target.checked)}
-              className="w-5 h-5 rounded bg-white/10 border-card-border text-primary focus:ring-primary"
+              className="w-5 h-5 rounded bg-surface border-card-border text-primary focus:ring-primary focus:ring-offset-0"
             />
-            <span className="text-sm">Auto-assign to teams</span>
+            <span className="text-sm text-foreground-muted">Auto-assign to teams</span>
           </label>
           <Button
             fullWidth
@@ -158,24 +176,24 @@ export default function NewGamePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col px-6 py-8 max-w-lg mx-auto w-full">
+    <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full safe-area-top safe-area-bottom">
       <BackButton />
-      <div className="mt-4 mb-6">
-        <h1 className="text-2xl font-bold mb-1">Set Up Teams</h1>
-        <p className="text-foreground-muted text-sm">
-          Drag players between teams or reassign
+      <div className="mt-6 mb-8">
+        <h1 className="text-title mb-1 text-balance">Set Up Teams</h1>
+        <p className="text-body text-foreground-muted">
+          Tap to move players between teams
         </p>
       </div>
 
       {/* Unassigned players */}
       {unassignedPlayers.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-foreground-muted mb-2">Unassigned</h3>
+        <div className="mb-5">
+          <h3 className="text-label text-foreground-faint mb-2">Unassigned</h3>
           <div className="flex flex-wrap gap-2">
             {unassignedPlayers.map((player) => (
               <span
                 key={player.id}
-                className="px-3 py-1.5 rounded-full bg-white/10 text-sm font-medium"
+                className="px-3 py-1.5 rounded-full bg-surface border border-card-border text-sm font-medium"
               >
                 {player.name}
               </span>
@@ -185,18 +203,18 @@ export default function NewGamePage() {
       )}
 
       {/* Teams */}
-      <div className="flex flex-col gap-3 mb-6">
+      <div className="flex flex-col gap-3 mb-5">
         {teams.map((team, teamIndex) => (
-          <Card key={team.id}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${TEAM_COLORS[teamIndex]}`} />
-                <h3 className="font-semibold">{team.name}</h3>
+          <Card key={team.id} padding="md">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-1 h-8 rounded-full bg-${['primary', 'success', 'warning', 'danger'][teamIndex]}`} />
+                <h3 className="font-semibold text-heading">{team.name}</h3>
               </div>
               {teams.length > 2 && (
                 <button
                   onClick={() => handleRemoveTeam(team.id)}
-                  className="text-foreground-muted hover:text-danger text-sm"
+                  className="text-foreground-faint hover:text-danger text-caption transition-colors"
                 >
                   Remove
                 </button>
@@ -205,26 +223,27 @@ export default function NewGamePage() {
             <div className="flex flex-wrap gap-2">
               {team.players.map((player) => (
                 <div key={player.id} className="flex items-center gap-1">
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-sm">
+                  <span className="px-3 py-1.5 rounded-full bg-surface text-sm font-medium">
                     {player.name}
                   </span>
-                  {/* Move buttons */}
                   {teams.map((otherTeam) =>
                     otherTeam.id !== team.id ? (
                       <button
                         key={otherTeam.id}
                         onClick={() => movePlayer(player.id, team.id, otherTeam.id)}
-                        className="text-xs text-foreground-muted hover:text-primary transition-colors"
+                        className="w-6 h-6 rounded-full bg-white/5 hover:bg-primary/20 text-foreground-faint hover:text-primary text-xs font-medium transition-all flex items-center justify-center"
                         title={`Move to ${otherTeam.name}`}
                       >
-                        →{otherTeam.name.slice(-1)}
+                        →
                       </button>
                     ) : null
                   )}
                 </div>
               ))}
               {team.players.length === 0 && (
-                <p className="text-foreground-muted text-xs">No players yet</p>
+                <p className="text-foreground-faint text-xs py-2">
+                  No players — move players here
+                </p>
               )}
             </div>
           </Card>

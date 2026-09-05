@@ -17,8 +17,8 @@ type GameAction =
   | { type: 'PLAYER_READY' }
   | { type: 'COUNTDOWN_COMPLETE' }
   | { type: 'SET_PROMPT'; prompt: Prompt | null }
-  | { type: 'ANSWER_CORRECT' }
-  | { type: 'ANSWER_SKIP' }
+  | { type: 'ANSWER_CORRECT'; allPrompts: Prompt[] }
+  | { type: 'ANSWER_SKIP'; allPrompts: Prompt[] }
   | { type: 'TIME_UP' }
   | { type: 'NEXT_TEAM' }
   | { type: 'NEXT_ROUND' }
@@ -96,11 +96,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const teamIndex = state.currentTeamIndex;
       const teams = [...state.config.teams];
       teams[teamIndex] = applyCorrectScore(teams[teamIndex]);
+
+      // Select next prompt atomically — no race condition
+      const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
+      const nextPrompt = getNextPrompt(
+        action.allPrompts,
+        state.config.categories,
+        state.config.difficulty,
+        usedIds
+      );
+
       return {
         ...state,
         config: { ...state.config, teams },
         roundCorrect: state.roundCorrect + 1,
-        currentPrompt: null,
+        currentPrompt: nextPrompt,
+        usedPromptIds: nextPrompt ? [...usedIds, nextPrompt.id] : usedIds,
       };
     }
 
@@ -108,11 +119,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const teamIndex = state.currentTeamIndex;
       const teams = [...state.config.teams];
       teams[teamIndex] = applySkipScore(teams[teamIndex]);
+
+      // Select next prompt atomically — no race condition
+      const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
+      const nextPrompt = getNextPrompt(
+        action.allPrompts,
+        state.config.categories,
+        state.config.difficulty,
+        usedIds
+      );
+
       return {
         ...state,
         config: { ...state.config, teams },
         roundSkipped: state.roundSkipped + 1,
-        currentPrompt: null,
+        currentPrompt: nextPrompt,
+        usedPromptIds: nextPrompt ? [...usedIds, nextPrompt.id] : usedIds,
       };
     }
 
@@ -211,7 +233,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'LOAD_STATE', state: parsed });
         }
       }
-    } catch {}
+    } catch {
+      localStorage.removeItem('qlue-game-state');
+    }
   }, []);
 
   useEffect(() => {
