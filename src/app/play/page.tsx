@@ -180,7 +180,7 @@ export default function PlayPage() {
         {state.currentPrompt ? (
           <div className="glass-card p-6 w-full text-center animate-scale-in" key={state.currentPrompt.id}>
             <p className="text-3xl md:text-4xl font-bold leading-tight">
-              {state.currentPrompt.text}
+              {state.currentPrompt.answer}
             </p>
             {state.currentPrompt.forbiddenWords &&
               state.currentPrompt.forbiddenWords.length > 0 && (
