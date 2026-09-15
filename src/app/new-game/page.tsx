@@ -11,6 +11,7 @@ import Card from '@/components/ui/Card';
 import BackButton from '@/components/ui/BackButton';
 
 const TEAM_NAMES = ['Team A', 'Team B', 'Team C', 'Team D'];
+const TEAM_COLORS = ['bg-primary', 'bg-success', 'bg-warning', 'bg-danger'];
 
 export default function NewGamePage() {
   const { state, dispatch } = useGame();
@@ -152,7 +153,7 @@ export default function NewGamePage() {
           <Card key={team.id} padding="md">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={`w-1.5 h-8 rounded-full bg-${['primary', 'success', 'warning', 'danger'][i]}`} />
+                <div className={`w-1.5 h-8 rounded-full ${TEAM_COLORS[i]}`} />
                 <h3 className="font-bold text-body">{team.name}</h3>
               </div>
               {teams.length > 2 && (

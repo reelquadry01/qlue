@@ -22,6 +22,7 @@ type GameAction =
   | { type: 'TIME_UP' }
   | { type: 'NEXT_TEAM' }
   | { type: 'NEXT_ROUND' }
+  | { type: 'END_GAME' }
   | { type: 'LOAD_STATE'; state: GameState };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -97,7 +98,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const teams = [...state.config.teams];
       teams[teamIndex] = applyCorrectScore(teams[teamIndex]);
 
-      // Select next prompt atomically — no race condition
       const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
       const nextPrompt = getNextPrompt(
         action.allPrompts,
@@ -120,7 +120,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const teams = [...state.config.teams];
       teams[teamIndex] = applySkipScore(teams[teamIndex]);
 
-      // Select next prompt atomically — no race condition
       const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
       const nextPrompt = getNextPrompt(
         action.allPrompts,
@@ -201,6 +200,26 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         roundCorrect: 0,
         roundSkipped: 0,
         usedPromptIds: [],
+      };
+    }
+
+    case 'END_GAME': {
+      // Record current round score if mid-round
+      const teamIndex = state.currentTeamIndex;
+      const currentTeamScore = state.config.teams[teamIndex];
+      const roundScore = {
+        teamId: currentTeamScore.id,
+        roundNumber: state.currentRound,
+        correct: state.roundCorrect,
+        skipped: state.roundSkipped,
+        streak: currentTeamScore.streak,
+      };
+      const roundScores = [...state.roundScores, roundScore];
+      return {
+        ...state,
+        status: 'FINAL_RESULTS',
+        roundScores,
+        currentPrompt: null,
       };
     }
 

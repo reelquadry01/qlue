@@ -15,26 +15,30 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 safe-area-top safe-area-bottom relative overflow-hidden">
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.04] blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-accent/[0.03] blur-[100px]" />
+      {/* Background orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-primary/[0.06] blur-[120px]" />
+        <div className="absolute bottom-[-15%] right-[-5%] w-[400px] h-[400px] rounded-full bg-accent/[0.05] blur-[100px]" />
+        <div className="absolute top-[30%] right-[20%] w-[200px] h-[200px] rounded-full bg-warning/[0.04] blur-[80px]" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center gap-10 max-w-md w-full">
         {/* Logo */}
         <div className="text-center animate-fade-in">
-          <h1 className="text-display mb-3">
-            <span className="text-primary">Q</span>lue
-          </h1>
+          <div className="mb-4">
+            <span className="text-[4.5rem] leading-none font-extrabold tracking-tighter">
+              <span className="gradient-text">Q</span>
+              <span className="text-foreground">lue</span>
+            </span>
+          </div>
           <p className="text-body text-foreground-muted text-balance">
-            Guess. Compete. Have fun.
+            Guess the word. Don&apos;t say the forbidden ones.
           </p>
         </div>
 
         {/* CTA */}
         <div className="w-full animate-slide-up">
-          <Button size="lg" fullWidth onClick={() => { dispatch({ type: 'NEW_GAME' }); router.push('/new-game'); }} className="text-xl py-6">
+          <Button size="lg" fullWidth onClick={() => { dispatch({ type: 'NEW_GAME' }); router.push('/new-game'); }} className="text-xl py-6 bg-gradient-to-r from-primary to-accent hover:from-primary-light hover:to-accent-light border-0 text-white font-bold shadow-lg shadow-primary/25">
             New Game
           </Button>
         </div>
