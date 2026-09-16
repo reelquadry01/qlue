@@ -9,9 +9,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', fullWidth = false, className = '', children, ...props }, ref) => {
+  ({ variant = 'primary', size = 'md', fullWidth = false, type = 'button', className = '', children, ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-150 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed select-none';
+      'inline-flex items-center justify-center font-semibold rounded-2xl transition-all duration-150 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed select-none touch-manipulation';
 
     const variants = {
       primary: 'bg-primary text-background hover:bg-primary-light shadow-lg shadow-primary/20 active:bg-primary-dark',
@@ -31,6 +31,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        type={type}
         className={`${base} ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
         {...props}
       >

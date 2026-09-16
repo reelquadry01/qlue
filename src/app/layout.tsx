@@ -15,7 +15,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Qlue - Social Guessing Game",
-  description: "Pick a category. Pick your team. Beat the clock. Developed by QA.",
+  description:
+    "Describe the word without saying the forbidden ones. 12 categories, 275+ prompts, teams and timers. Free, no sign-up.",
+  applicationName: "Qlue",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -27,9 +29,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#0A0A0F",
+  // Zoom stays enabled on purpose: `maximumScale`/`userScalable: false` blocks
+  // pinch-zoom for low-vision users.
+  viewportFit: "cover",
+  colorScheme: "dark",
+  themeColor: "#0C0A1A",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -40,7 +44,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground">
         <GameProvider>
-          <main className="flex-1 flex flex-col">{children}</main>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-[100] focus:rounded-xl focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-body focus:font-semibold"
+          >
+            Skip to content
+          </a>
+          <main id="main" className="flex-1 flex flex-col">
+            {children}
+          </main>
         </GameProvider>
       </body>
     </html>

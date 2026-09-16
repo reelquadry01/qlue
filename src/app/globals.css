@@ -12,7 +12,9 @@
   --foreground: #F5F0FF;
   --foreground-secondary: #C8BDE8;
   --foreground-muted: #9589BD;
-  --foreground-faint: #6B5E8A;
+  /* Minimum-contrast-safe on --background (5.2:1). The previous #6B5E8A
+     measured 3.3:1 and failed WCAG AA for the 13px caption/label text. */
+  --foreground-faint: #8A7DB0;
 
   /* Primary — electric violet, party energy */
   --primary: #A855F7;
@@ -336,4 +338,39 @@ button, a, input, select, textarea {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 0;
+}
+
+/*
+ * Respect the OS "reduce motion" setting. The urgent-timer pulse and the glow
+ * loops are decorative, so they are switched off rather than shortened.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse-urgent,
+  .animate-float,
+  .animate-glow-pulse,
+  .animate-shimmer {
+    animation: none !important;
+  }
+}
+
+/* Screen-reader-only helper (for live regions that announce game events). */
+.sr-only-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
