@@ -1,235 +1,20 @@
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { GameState, INITIAL_GAME_STATE, Team, Player, CategorySelection, Prompt } from '@/engine/types';
-import { getNextStatus, shouldEndGame } from '@/engine/state-machine';
-import { applyCorrectScore, applySkipScore } from '@/engine/scoring';
-import { getNextPrompt } from '@/engine/prompts';
-
-type GameAction =
-  | { type: 'NEW_GAME' }
-  | { type: 'SET_PLAYERS'; players: Player[] }
-  | { type: 'SET_TEAMS'; teams: Team[] }
-  | { type: 'SET_CATEGORIES'; categories: CategorySelection[] }
-  | { type: 'SET_SETTINGS'; roundDuration: number; totalRounds: number; difficulty: GameState['config']['difficulty'] }
-  | { type: 'NAVIGATE'; status: GameState['status'] }
-  | { type: 'START_ROUND' }
-  | { type: 'PLAYER_READY' }
-  | { type: 'COUNTDOWN_COMPLETE' }
-  | { type: 'SET_PROMPT'; prompt: Prompt | null }
-  | { type: 'ANSWER_CORRECT'; allPrompts: Prompt[] }
-  | { type: 'ANSWER_SKIP'; allPrompts: Prompt[] }
-  | { type: 'TIME_UP' }
-  | { type: 'NEXT_TEAM' }
-  | { type: 'NEXT_ROUND' }
-  | { type: 'END_GAME' }
-  | { type: 'LOAD_STATE'; state: GameState };
-
-function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type) {
-    case 'NEW_GAME':
-      return { ...INITIAL_GAME_STATE, status: 'SETUP_PLAYERS' };
-
-    case 'SET_PLAYERS':
-      return { ...state, status: 'SETUP_TEAMS' };
-
-    case 'SET_TEAMS':
-      return {
-        ...state,
-        config: { ...state.config, teams: action.teams },
-        status: 'SETUP_CATEGORIES',
-      };
-
-    case 'SET_CATEGORIES':
-      return {
-        ...state,
-        config: { ...state.config, categories: action.categories },
-        status: 'SETUP_SETTINGS',
-      };
-
-    case 'SET_SETTINGS':
-      return {
-        ...state,
-        config: {
-          ...state.config,
-          roundDuration: action.roundDuration,
-          totalRounds: action.totalRounds,
-          difficulty: action.difficulty,
-        },
-        status: 'ROUND_READY',
-      };
-
-    case 'NAVIGATE': {
-      const next = getNextStatus(state.status, action.status);
-      return next ? { ...state, status: next } : state;
-    }
-
-    case 'START_ROUND':
-      return {
-        ...state,
-        status: 'PHONE_PASS',
-        currentRound: state.currentRound + 1,
-        currentTeamIndex: 0,
-        roundCorrect: 0,
-        roundSkipped: 0,
-      };
-
-    case 'PLAYER_READY':
-      return { ...state, status: 'COUNTDOWN' };
-
-    case 'COUNTDOWN_COMPLETE':
-      return {
-        ...state,
-        status: 'ROUND_ACTIVE',
-        startTime: Date.now(),
-        timeRemaining: state.config.roundDuration,
-      };
-
-    case 'SET_PROMPT':
-      if (!action.prompt) return state;
-      return {
-        ...state,
-        currentPrompt: action.prompt,
-        usedPromptIds: [...state.usedPromptIds, action.prompt.id],
-      };
-
-    case 'ANSWER_CORRECT': {
-      const teamIndex = state.currentTeamIndex;
-      const teams = [...state.config.teams];
-      teams[teamIndex] = applyCorrectScore(teams[teamIndex]);
-
-      const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
-      const nextPrompt = getNextPrompt(
-        action.allPrompts,
-        state.config.categories,
-        state.config.difficulty,
-        usedIds
-      );
-
-      return {
-        ...state,
-        config: { ...state.config, teams },
-        roundCorrect: state.roundCorrect + 1,
-        currentPrompt: nextPrompt,
-        usedPromptIds: nextPrompt ? [...usedIds, nextPrompt.id] : usedIds,
-      };
-    }
-
-    case 'ANSWER_SKIP': {
-      const teamIndex = state.currentTeamIndex;
-      const teams = [...state.config.teams];
-      teams[teamIndex] = applySkipScore(teams[teamIndex]);
-
-      const usedIds = [...state.usedPromptIds, state.currentPrompt?.id].filter(Boolean) as string[];
-      const nextPrompt = getNextPrompt(
-        action.allPrompts,
-        state.config.categories,
-        state.config.difficulty,
-        usedIds
-      );
-
-      return {
-        ...state,
-        config: { ...state.config, teams },
-        roundSkipped: state.roundSkipped + 1,
-        currentPrompt: nextPrompt,
-        usedPromptIds: nextPrompt ? [...usedIds, nextPrompt.id] : usedIds,
-      };
-    }
-
-    case 'TIME_UP': {
-      const teamIndex = state.currentTeamIndex;
-      const roundScore = {
-        teamId: state.config.teams[teamIndex].id,
-        roundNumber: state.currentRound,
-        correct: state.roundCorrect,
-        skipped: state.roundSkipped,
-        streak: state.config.teams[teamIndex].streak,
-      };
-      return {
-        ...state,
-        status: 'ROUND_RESULTS',
-        roundScores: [...state.roundScores, roundScore],
-        currentPrompt: null,
-      };
-    }
-
-    case 'NEXT_TEAM': {
-      if (shouldEndGame(state, 'NEXT_TEAM')) {
-        return { ...state, status: 'FINAL_RESULTS' };
-      }
-      const nextTeamIndex = state.currentTeamIndex + 1;
-      if (nextTeamIndex >= state.config.teams.length) {
-        return {
-          ...state,
-          status: 'ROUND_RESULTS',
-          currentRound: state.currentRound,
-          currentTeamIndex: 0,
-        };
-      }
-      return {
-        ...state,
-        status: 'PHONE_PASS',
-        currentTeamIndex: nextTeamIndex,
-        roundCorrect: 0,
-        roundSkipped: 0,
-        usedPromptIds: [],
-      };
-    }
-
-    case 'NEXT_ROUND': {
-      const nextTeamIndex = state.currentTeamIndex + 1;
-      if (nextTeamIndex >= state.config.teams.length) {
-        if (state.currentRound >= state.config.totalRounds) {
-          return { ...state, status: 'FINAL_RESULTS' };
-        }
-        return {
-          ...state,
-          status: 'PHONE_PASS',
-          currentTeamIndex: 0,
-          currentRound: state.currentRound + 1,
-          roundCorrect: 0,
-          roundSkipped: 0,
-          usedPromptIds: [],
-        };
-      }
-      return {
-        ...state,
-        status: 'PHONE_PASS',
-        currentTeamIndex: nextTeamIndex,
-        roundCorrect: 0,
-        roundSkipped: 0,
-        usedPromptIds: [],
-      };
-    }
-
-    case 'END_GAME': {
-      // Record current round score if mid-round
-      const teamIndex = state.currentTeamIndex;
-      const currentTeamScore = state.config.teams[teamIndex];
-      const roundScore = {
-        teamId: currentTeamScore.id,
-        roundNumber: state.currentRound,
-        correct: state.roundCorrect,
-        skipped: state.roundSkipped,
-        streak: currentTeamScore.streak,
-      };
-      const roundScores = [...state.roundScores, roundScore];
-      return {
-        ...state,
-        status: 'FINAL_RESULTS',
-        roundScores,
-        currentPrompt: null,
-      };
-    }
-
-    case 'LOAD_STATE':
-      return action.state;
-
-    default:
-      return state;
-  }
-}
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+  ReactNode,
+} from 'react';
+import { GameState, INITIAL_GAME_STATE, Team } from '@/engine/types';
+import { GameAction, gameReducer } from '@/engine/reducer';
+import {
+  GAME_STORAGE_KEY,
+  isPersistableStatus,
+  parseGameState,
+  serializeGameState,
+} from '@/engine/persistence';
 
 interface GameContextType {
   state: GameState;
@@ -243,25 +28,19 @@ const GameContext = createContext<GameContextType | null>(null);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
 
+  // Restore an in-progress game (reload, accidental back, browser restart).
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('qlue-game-state');
-      if (saved) {
-        const parsed = JSON.parse(saved) as GameState;
-        if (parsed.status !== 'HOME' && parsed.status !== 'FINAL_RESULTS') {
-          dispatch({ type: 'LOAD_STATE', state: parsed });
-        }
-      }
-    } catch {
-      localStorage.removeItem('qlue-game-state');
-    }
+    const saved = parseGameState(safeReadStorage());
+    if (saved) dispatch({ type: 'LOAD_STATE', state: saved });
   }, []);
 
+  // Only a game in progress is worth restoring, so finished games and the
+  // setup screens clear the stored state instead of leaving stale data behind.
   useEffect(() => {
-    if (state.status !== 'HOME' && state.status !== 'FINAL_RESULTS') {
-      localStorage.setItem('qlue-game-state', JSON.stringify(state));
+    if (isPersistableStatus(state.status)) {
+      safeWriteStorage(serializeGameState(state));
     } else {
-      localStorage.removeItem('qlue-game-state');
+      safeRemoveStorage();
     }
   }, [state]);
 
@@ -273,6 +52,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
       {children}
     </GameContext.Provider>
   );
+}
+
+// Storage can throw (private windows, disabled storage, quota); the game must
+// keep working when it does.
+function safeReadStorage(): string | null {
+  try {
+    return window.localStorage.getItem(GAME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function safeWriteStorage(value: string) {
+  try {
+    window.localStorage.setItem(GAME_STORAGE_KEY, value);
+  } catch {
+    // Ignore: the game continues without persistence.
+  }
+}
+
+function safeRemoveStorage() {
+  try {
+    window.localStorage.removeItem(GAME_STORAGE_KEY);
+  } catch {
+    // Ignore.
+  }
 }
 
 export function useGame() {

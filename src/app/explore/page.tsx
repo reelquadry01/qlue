@@ -1,44 +1,74 @@
 'use client';
 
 import Card from '@/components/ui/Card';
+import PageShell from '@/components/ui/PageShell';
 import { CATEGORIES } from '@/lib/categories';
 import { getPromptCountByCategory } from '@/data/seed-content';
-import BackButton from '@/components/ui/BackButton';
+import { useGame } from '@/context/GameContext';
+import { useRouter } from 'next/navigation';
 
 export default function ExplorePage() {
-  return (
-    <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full safe-area-top safe-area-bottom">
-      <BackButton href="/" />
-      <div className="mt-6 mb-8">
-        <h1 className="text-title mb-1">Explore Categories</h1>
-        <p className="text-body text-foreground-muted">Browse available categories</p>
-      </div>
+  const { dispatch } = useGame();
+  const router = useRouter();
 
-      <div className="flex flex-col gap-3">
+  const startWithCategory = (categoryId: string) => {
+    dispatch({ type: 'PRESELECT_CATEGORY', categoryId });
+    router.push('/new-game');
+  };
+
+  return (
+    <PageShell
+      title="Explore Categories"
+      subtitle="Browse what's in the game, then jump straight into setup"
+      backHref="/"
+      width="lg"
+    >
+      <ul className="grid gap-3 sm:grid-cols-2">
         {CATEGORIES.map((category) => {
           const count = getPromptCountByCategory(category.id);
           return (
-            <Card key={category.id}>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl w-12 h-12 flex items-center justify-center rounded-xl bg-surface shrink-0">{category.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-body">{category.name}</h3>
-                  <p className="text-label text-foreground-faint">{count} prompts</p>
+            <li key={category.id} className="h-full">
+              <Card className="h-full flex flex-col">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="text-2xl w-12 h-12 flex items-center justify-center rounded-xl bg-surface shrink-0"
+                  >
+                    {category.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-bold text-body">{category.name}</h2>
+                    <p className="text-label text-foreground-faint">{count} prompts</p>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/5">
-                <div className="flex flex-wrap gap-1.5">
-                  {category.subcategories.map((sub) => (
-                    <span key={sub} className="text-caption px-2.5 py-1 rounded-lg bg-surface text-foreground-muted">{sub}</span>
-                  ))}
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <ul className="flex flex-wrap gap-1.5" aria-label={`${category.name} topics`}>
+                    {category.subcategories.map((sub) => (
+                      <li
+                        key={sub}
+                        className="text-caption px-2.5 py-1 rounded-lg bg-surface text-foreground-muted"
+                      >
+                        {sub}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            </Card>
+                <button
+                  type="button"
+                  onClick={() => startWithCategory(category.id)}
+                  className="mt-4 w-full py-2.5 rounded-xl bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-light transition-colors text-sm font-semibold touch-manipulation"
+                >
+                  Start with this category
+                </button>
+              </Card>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      <p className="text-caption text-foreground-faint text-center mt-8">More categories coming soon</p>
-    </div>
+      <p className="text-caption text-foreground-faint text-center mt-8">
+        More categories coming soon
+      </p>
+    </PageShell>
   );
 }

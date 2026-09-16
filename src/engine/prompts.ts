@@ -7,7 +7,7 @@ export function selectPrompts(
   count: number,
   usedIds: string[] = []
 ): Prompt[] {
-  let filtered = allPrompts.filter((p) => {
+  const filtered = allPrompts.filter((p) => {
     const categoryMatch = categories.some((c) => c.categoryId === p.categoryId);
     const difficultyMatch =
       difficulty === 'mixed' || p.difficulty === difficulty;

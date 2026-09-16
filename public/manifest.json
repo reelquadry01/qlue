@@ -4,9 +4,13 @@
   "description": "Pick a category. Pick your team. Beat the clock.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0F",
-  "theme_color": "#0A0A0F",
-  "orientation": "portrait",
+  "background_color": "#0C0A1A",
+  "theme_color": "#0C0A1A",
+  "orientation": "any",
+  "lang": "en",
+  "id": "/",
+  "scope": "/",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -16,7 +20,14 @@
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
